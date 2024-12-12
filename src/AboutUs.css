@@ -1,0 +1,104 @@
+/* Main container styling */
+.about-us-section {
+    background-color: #f9f9f9;
+    padding: 50px 15px;
+    border-radius: 10px;
+  }
+  
+  .about-us-title {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #007bff;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  
+  .about-us-intro {
+    font-size: 1.2rem;
+    color: #555;
+    margin-bottom: 30px;
+  }
+  
+  .learn-more-btn {
+    font-size: 1.1rem;
+    padding: 10px 20px;
+    background-color: #007bff;
+    border: none;
+    border-radius: 50px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .learn-more-btn:hover {
+    background-color: #0056b3;
+  }
+  
+  /* Card styling */
+  .about-card {
+    background-color: #fff;
+    border: none;
+    border-radius: 15px;
+    transition: transform 0.2s ease-in-out;
+  }
+  
+  .about-card:hover {
+    transform: scale(1.05);
+  }
+  
+  .card-title-custom {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+  }
+  
+  .card-text-custom {
+    font-size: 1.1rem;
+    color: #666;
+    line-height: 1.6;
+  }
+  
+  .contact-card {
+    background-color: #007bff;
+    color: #fff;
+    border-radius: 15px;
+  }
+  
+  .contact-card .card-title-custom {
+    color: #fff;
+  }
+  
+  .contact-card .card-text-custom ul li {
+    color: #fff;
+    font-size: 1.2rem;
+  }
+  
+  .contact-card .card-text-custom strong {
+    color: #ffd700; /* Highlight contact details */
+  }
+  
+  ul {
+    list-style-type: none;
+    padding-left: 0;
+  }
+  
+  ul li {
+    margin-bottom: 10px;
+  }
+  
+  /* Media queries for responsiveness */
+  @media (max-width: 768px) {
+    .about-us-title {
+      font-size: 2.5rem;
+    }
+  
+    .card-title-custom {
+      font-size: 1.3rem;
+    }
+  
+    .card-text-custom {
+      font-size: 1rem;
+    }
+  }
+  

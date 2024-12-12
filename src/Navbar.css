@@ -1,0 +1,32 @@
+
+.navbar-nav {
+  display: flex;
+  justify-content: center;
+  align-items: center; 
+  
+}
+
+.nav-link-custom {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  white-space: nowrap; /* Prevent text from wrapping */
+  padding: 5px 10px;
+  color: white;
+}
+
+.nav-link-custom svg {
+  margin-bottom: 5px; /* Space between icon and text */
+}
+
+.navbar-logo img {
+  width: 80px; /* Adjust logo size */
+  height: auto;
+  margin-left: -60px; /* Adjust logo position */
+  margin-right: 50px;
+}
+.nav-link-custom svg, .nav-link-custom span {
+  color: white; /* Ensure both the icon and label text are bright */
+}
