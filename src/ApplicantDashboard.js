@@ -1,9 +1,3 @@
-
-
-
-
-
-
 import React, { useState, useEffect } from "react";
 import { ProgressBar, Dropdown } from "react-bootstrap";
 import ApplyForBursary from "./ApplyForBursary"; // Import the ApplyForBursary component
@@ -12,11 +6,8 @@ import "./ApplicantDashboard.css"; // Assuming you'll style the dashboard separa
 import { useNavigate } from "react-router-dom"; // For redirecting the user
 
 const ApplicantDashboard = () => {
-  const storedUser = localStorage.getItem('user');
-  console.log(storedUser)
-
-    
-
+  const navigate = useNavigate(); // To navigate programmatically
+  const token = localStorage.getItem("token"); // Get the token from localStorage
 
   const [applicantData, setApplicantData] = useState({
     full_name: "",
@@ -28,20 +19,6 @@ const ApplicantDashboard = () => {
     applied: false, // Indicates if the applicant has applied
   });
 
-  setApplicantData({
-    full_name: storedUser.full_name || "", // Fallback to empty if not available
-    admission_number: storedUser.admission_number || "",
-    institution_name: storedUser.institution_name || "",
-    email: storedUser.email || "",
-    phone_number: storedUser.phone_number || "",
-    status: "Pending", // Default status
-    applied: false, // Default value
-  });
-
-  const navigate = useNavigate(); // To navigate programmatically
-  const token = localStorage.getItem("token"); // Get the token from localStorage
-
-  // Fetch applicant data from the backend when the component mounts
   useEffect(() => {
     if (!token) {
       console.error("No token found in localStorage");
@@ -50,30 +27,23 @@ const ApplicantDashboard = () => {
     }
 
     const fetchApplicantData = async () => {
-      const token = localStorage.getItem("token"); // Get the token from localStorage
-      if (!token) {
-        console.error("No token found in localStorage");
-        return;
-      }
-    
       try {
         const response = await axios.get("http://127.0.0.1:5000/auth/user", {
           headers: {
             Authorization: `Bearer ${token}`, // Send the token in the Authorization header
           },
         });
-        setApplicantData(response.data); // Update state with the fetched data
+        setApplicantData((prevState) => ({
+          ...prevState,
+          ...response.data,
+        }));
       } catch (error) {
         console.error("Error fetching applicant data:", error.response || error);
-        // Handle the error (e.g., show an error message)
       }
     };
-    
-
-
 
     fetchApplicantData();
-  }, [token, navigate]); // Rerun effect if the token changes (e.g., on logout)
+  }, [token, navigate]);
 
   // Function to render the status message based on the application status
   const renderStatusMessage = () => {
@@ -117,7 +87,11 @@ const ApplicantDashboard = () => {
           {applicantData.applied ? (
             renderStatusMessage()
           ) : (
-            <ApplyForBursary onApply={() => setApplicantData({ ...applicantData, applied: true })} />
+            <ApplyForBursary
+              onApply={() =>
+                setApplicantData((prevState) => ({ ...prevState, applied: true }))
+              }
+            />
           )}
         </div>
       </div>
@@ -166,3 +140,4 @@ const ApplicantInfo = ({ applicantData }) => (
 );
 
 export default ApplicantDashboard;
+

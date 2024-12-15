@@ -57,6 +57,7 @@ const AdminAchievements = () => {
             .then(() => setAchievements(prev => prev.filter(item => item.id !== id)))
             .catch(error => console.error("Error deleting achievement:", error));
     };
+    
 
     return (
         <div className="admin-achievements">

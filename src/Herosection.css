@@ -1,0 +1,154 @@
+/* HeroSection.css
+.hero-section {
+    position: relative;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: white;
+    background: linear-gradient(135deg, #b6c5da, #bcd6c2);
+    overflow: hidden;
+  }
+  
+  .rotating-logo-container {
+    position: relative;
+    z-index: 1;
+    opacity: 1;
+  }
+  
+  .rotating-logo {
+    width: 200px;
+    animation: rotate 10s linear infinite;
+  }
+
+  .hero-content-top {
+    position: absolute;
+    top: 10%;
+    z-index: 2;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 20px;
+    border-radius: 8px;
+    border-bottom-left-radius: 50%; /* Adds an n-shape effect */
+    /* border-bottom-right-radius: 50%;
+} */
+
+/*   
+  .hero-content-bottom {
+    position: absolute;
+    bottom: 10%;
+    z-index: 2;
+    text-align: center;
+  }
+  
+  .hero-title {
+    font-size: 3rem;
+    font-weight: bold;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.5rem;
+    margin-top: 1rem;
+  }
+  
+  @keyframes rotate {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+   */ 
+
+
+   /* HeroSection.css */
+.hero-section {
+    position: relative;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: white;
+    background: linear-gradient(135deg, #b6c5da, #bcd6c2);
+    overflow: hidden;
+}
+
+.hero-content-top {
+    position: absolute;
+    top: 10%;
+    z-index: 2;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 20px;
+    border-radius: 8px;
+    border-bottom-left-radius: 50%; /* Adds an n-shape effect */
+    border-bottom-right-radius: 50%;
+}
+
+.hero-content-bottom {
+    position: absolute;
+    bottom: 10%;
+    z-index: 2;
+    text-align: center;
+}
+
+.hero-title {
+    font-size: 3rem;
+    font-weight: bold;
+}
+
+.hero-subtitle {
+    font-size: 1.5rem;
+    margin-top: 1rem;
+}
+
+.rotating-logo-container {
+    position: relative;
+    z-index: 1;
+    opacity: 1;
+}
+
+.rotating-logo {
+    width: 200px;
+    animation: rotate 10s linear infinite;
+}
+
+/* Styling for the moving images on left and right */
+.moving-image {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 0;
+    opacity: 0.5;
+    width: 150px;
+    animation: move 20s linear infinite;
+}
+
+.moving-image.left {
+    left: -150px;
+}
+
+.moving-image.right {
+    right: -150px;
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes move {
+    0% {
+        transform: translateX(-100%) translateY(-50%);
+    }
+    100% {
+        transform: translateX(100%) translateY(-50%);
+    }
+}

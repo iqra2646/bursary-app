@@ -1,12 +1,10 @@
 
-
-
-
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from flask_bcrypt import Bcrypt
+from flask_mail import Mail, Message
 from flask_cors import CORS
 from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity, JWTManager
 from datetime import timedelta
@@ -26,6 +24,10 @@ CORS(app, origins=["http://localhost:3000"], methods=["GET", "POST", "PUT", "DEL
 # Configurations
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['UPLOAD_FOLDER'] = 'public/images'
+app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10MB
+
 
 # Load the secret key from an environment variable for better security
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "your_secret_key")  # Ensure to set this in your environment
@@ -47,6 +49,15 @@ class User(db.Model):
     phone_number = db.Column(db.String(15), nullable=False)
     password = db.Column(db.String(200), nullable=False)
 
+
+class Achievement(db.Model):
+    __tablename__ = 'achievements'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    img_url = db.Column(db.String(255), nullable=False)
+    icon = db.Column(db.String(50), nullable=True)
+
 # -------------------- Schemas --------------------
 class UserSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
@@ -57,6 +68,71 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
 # Initialize schemas
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)
+
+
+
+# reject or approve for admin
+# Helper Functions
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def send_status_update_email(email, status, comments=None):
+    try:
+        if status == 'pending':
+            subject = 'Bursary Application Received'
+            body = f'''
+            Dear Applicant,
+
+            We have received your bursary application and it is currently under review. 
+            Our team will assess your application and get back to you soon.
+
+            Application Status: Pending
+            '''
+        elif status == 'approved':
+            subject = 'Bursary Application Approved'
+            body = f'''
+            Dear Applicant,
+
+            We are pleased to inform you that your bursary application has been APPROVED.
+
+            Application Status: Approved
+            {f"Reviewer Comments: {comments}" if comments else ""}
+
+            Next steps will be communicated separately.
+
+            Congratulations!
+            Bursary Committee
+            '''
+        elif status == 'rejected':
+            subject = 'Bursary Application Status'
+            body = f'''
+            Dear Applicant,
+
+            After careful review, we regret to inform you that your bursary application 
+            has been REJECTED.
+
+            Application Status: Rejected
+            {f"Reviewer Comments: {comments}" if comments else ""}
+
+            We appreciate your application and encourage you to apply again in the future.
+
+            Bursary Committee
+            '''
+        else:
+            return False
+
+        msg = Message(
+            subject=subject,
+            recipients=[email],
+            body=body
+        )
+        mail.send(msg)
+        return True
+    except Exception as e:
+        print(f"Email sending failed: {e}")
+        return False
+
+
 
 # -------------------- Routes --------------------
 @app.route('/register', methods=['POST'])
@@ -297,15 +373,25 @@ def get_single_applicant(id):
     applicant = Applicant.query.get_or_404(id)
     return applicant_schema.jsonify(applicant)
 
-# Route for admin to approve or reject an application
+
 @app.route('/applicants/<int:id>', methods=['PUT'])
 def update_application_status(id):
-    applicant = Applicant.query.get_or_404(id)
-    status = request.json.get('status', applicant.status)
-    applicant.status = status
+    applicant = Applicant.query.get_or_404(id)  # Fetch applicant by ID or 404 if not found
+    status = request.json.get('status')  # Get the new status from the request body
 
-    db.session.commit()
-    return applicant_schema.jsonify(applicant)
+    # Ensure the status is either 'Approved' or 'Rejected'
+    if status not in ['Approved', 'Rejected']:
+        return jsonify({"error": "Invalid status. It must be 'Approved' or 'Rejected'."}), 400
+
+    applicant.status = status  # Update the applicant's status
+
+    try:
+        db.session.commit()  # Commit the change to the database
+        return applicant_schema.jsonify(applicant)  # Return the updated applicant data
+    except Exception as e:
+        db.session.rollback()  # Rollback in case of an error
+        return jsonify({"error": str(e)}), 500  # Return an error message if something goes wrong
+
 
 # Route to delete an applicant
 @app.route('/applicants/<int:id>', methods=['DELETE'])
@@ -359,11 +445,110 @@ def update_applicant(id):
 
     return applicant_schema.jsonify(applicant)
 
-
-
-
-
 # the end of the bursary application functionality
+
+
+# start of the key-achievements functionality
+class AchievementSchema(ma.SQLAlchemySchema):
+    class Meta:
+        model = Achievement
+        load_instance = True
+
+    id = ma.auto_field()
+    title = ma.auto_field()
+    description = ma.auto_field()
+    img_url = ma.auto_field()
+    icon = ma.auto_field()
+
+achievement_schema = AchievementSchema()
+achievements_schema = AchievementSchema(many=True)
+
+@app.route('/images/<filename>')
+def serve_image(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+@app.route('/achievements', methods=['GET'])
+def get_achievements():
+    achievements = Achievement.query.all()
+    return achievements_schema.jsonify(achievements)
+
+@app.route('/achievements/<int:id>', methods=['GET'])
+def get_achievement(id):
+    achievement = Achievement.query.get_or_404(id)
+    return achievement_schema.jsonify(achievement)
+
+@app.route('/achievements', methods=['POST'])
+def create_achievement():
+    image = request.files.get('image')
+    if not image or image.filename == '':
+        return jsonify({"error": "No image file provided."}), 400
+    if not allowed_file(image.filename):
+        return jsonify({"error": "Invalid file type."}), 400
+
+    # Ensure the upload directory exists
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+    filename = secure_filename(image.filename)
+    image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    image.save(image_path)
+
+    data = request.form
+    title = data.get('title')
+    description = data.get('description')
+    if not title or not description:
+        return jsonify({"error": "Title and description are required."}), 400
+
+    new_achievement = Achievement(
+        title=title,
+        description=description,
+        img_url=f'/images/{filename}',
+        icon=data.get('icon')
+    )
+    db.session.add(new_achievement)
+    db.session.commit()
+
+    return achievement_schema.jsonify(new_achievement), 201
+
+@app.route('/achievements/<int:id>', methods=['PUT'])
+def update_achievement(id):
+    achievement = Achievement.query.get_or_404(id)
+    data = request.form
+
+    title = data.get('title')
+    description = data.get('description')
+    if not title or not description:
+        return jsonify({"error": "Title and description are required."}), 400
+
+    image = request.files.get('image')
+    if image and image.filename:
+        if not allowed_file(image.filename):
+            return jsonify({"error": "Invalid file type."}), 400
+
+        # Ensure the upload directory exists
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+        filename = secure_filename(image.filename)
+        image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        image.save(image_path)
+        achievement.img_url = f'/images/{filename}'
+
+    achievement.title = title
+    achievement.description = description
+    achievement.icon = data.get('icon')
+
+    db.session.commit()
+    return achievement_schema.jsonify(achievement)
+
+@app.route('/achievements/<int:id>', methods=['DELETE'])
+def delete_achievement(id):
+    achievement = Achievement.query.get_or_404(id)
+    db.session.delete(achievement)
+    db.session.commit()
+    return jsonify({"message": "Achievement deleted successfully"}), 200
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+# end of the key-achievement functionality
 
 
 # -------------------- Main Function --------------------
